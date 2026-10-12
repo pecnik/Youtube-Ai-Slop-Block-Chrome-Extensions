@@ -10,6 +10,7 @@ const CARD_SELECTOR = [
 ].join(",");
 
 let blacklist = []; // [{ id, name, handle, addedAt }]
+let aislist = new Set(); // lowercased "@handle"s from AiSList, synced hourly by background.js
 
 // When "Show blacklisted channels" is off, block.css hides blacklisted videos entirely.
 function applyShowBlacklisted(show = true) {
@@ -21,11 +22,15 @@ chrome.storage.sync.get(["blacklist", "showBlacklisted"]).then((data) => {
     applyShowBlacklisted(data.showBlacklisted);
     scan();
 });
+chrome.storage.local.get("aislist").then((data) => {
+    aislist = new Set(data.aislist?.handles);
+    scan();
+});
 chrome.storage.onChanged.addListener((changes) => {
     if (changes.showBlacklisted) applyShowBlacklisted(changes.showBlacklisted.newValue);
-    if (!changes.blacklist) return;
-    blacklist = changes.blacklist.newValue || [];
-    scan();
+    if (changes.aislist) aislist = new Set(changes.aislist.newValue?.handles);
+    if (changes.blacklist) blacklist = changes.blacklist.newValue || [];
+    if (changes.aislist || changes.blacklist) scan();
 });
 
 // Cards don't always show the channel (e.g. on a channel's own page), but they
@@ -103,6 +108,10 @@ function findCardEntry(card) {
     // return Boolean(entry);
 }
 
+function isInAisList(card) {
+    return aislist.has(getCardChannelKey(card)?.toLowerCase());
+}
+
 async function addToBlacklist(channel) {
     const { blacklist = [] } = await chrome.storage.sync.get("blacklist");
     if (!blacklist.some((c) => c.id === channel.id)) {
@@ -126,7 +135,14 @@ function setButtonState(btn, state) {
     // change, so only touch the button when the state actually changes.
     if (btn.dataset.state === state) return;
     btn.dataset.state = state;
-    btn.textContent = { idle: "Blacklist Channel", loading: "…", blacklisted: "Blacklisted" }[state];
+    btn.textContent = { idle: "Blacklist Channel", loading: "…", blacklisted: "Blacklisted", aislist: "AiSList" }[state];
+}
+
+// Our own blacklist wins over AiSList, so the button can still remove the channel.
+function getCardState(card) {
+    if (findCardEntry(card)) return "blacklisted";
+    if (isInAisList(card)) return "aislist";
+    return "idle";
 }
 
 async function toggleBlacklist(card) {
@@ -170,10 +186,12 @@ function addButton(card) {
         e.preventDefault();
         e.stopPropagation();
         if (btn.dataset.state === "loading") return;
+        // AiSList channels can't be removed from here; that's their list, not ours.
+        if (btn.dataset.state === "aislist") return;
 
         setButtonState(btn, "loading");
         await toggleBlacklist(card);
-        setButtonState(btn, findCardEntry(card) ? "blacklisted" : "idle");
+        setButtonState(btn, getCardState(card));
     });
 
     container.appendChild(btn);
@@ -181,10 +199,10 @@ function addButton(card) {
 
 // Syncs the button label, and the red outline on search results, with the blacklist.
 function updateCard(card) {
-    const blacklisted = Boolean(findCardEntry(card));
+    const state = getCardState(card);
     const btn = card.querySelector(".ytaib-btn");
-    if (btn && btn.dataset.state !== "loading") setButtonState(btn, blacklisted ? "blacklisted" : "idle");
-    if (card.matches("ytd-search ytd-video-renderer")) card.classList.toggle("ytaib-blacklisted", blacklisted);
+    if (btn && btn.dataset.state !== "loading") setButtonState(btn, state);
+    if (card.matches("ytd-search ytd-video-renderer")) card.classList.toggle("ytaib-blacklisted", state !== "idle");
 }
 
 // Tells background.js how many blacklisted videos this page has, for the icon badge.
