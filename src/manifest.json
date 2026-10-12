@@ -1,0 +1,37 @@
+{
+    "manifest_version": 3,
+    "name": "YT-AI-Block",
+    "version": "1.0.0",
+    "description": "Block AI-YT channels",
+    "permissions": ["storage"],
+    "icons": {
+        "16": "icon.png",
+        "32": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "YT-AI-Block",
+        "default_icon": {
+            "16": "icon.png",
+            "32": "icon.png"
+        }
+    },
+    "content_scripts": [
+        {
+            "matches": ["*://www.youtube.com/*"],
+            "js": ["block.js"],
+            "css": ["block.css"]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["ai-slop.jpg"],
+            "matches": ["*://www.youtube.com/*"]
+        }
+    ]
+}

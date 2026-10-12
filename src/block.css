@@ -1,0 +1,74 @@
+ytd-rich-item-renderer,
+ytd-video-renderer,
+ytd-compact-video-renderer,
+ytd-grid-video-renderer,
+yt-lockup-view-model {
+    position: relative;
+}
+
+.ytaib-btn {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 10;
+    padding: 4px 8px;
+    font:
+        600 12px system-ui,
+        sans-serif;
+    color: #fff;
+    background: #333;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.ytaib-btn[data-state="blacklisted"] {
+    background: #f00;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.ytaib-blacklisted {
+    outline: 2px solid red;
+    border-radius: 4px;
+}
+
+/* "Show blacklisted channels" is off in the popup. */
+.ytaib-hide-blacklisted .ytaib-blacklisted {
+    display: none !important;
+}
+
+/* Cover the thumbnail with the "AI slop" image. An overlay survives YouTube
+   re-rendering the <img>, unlike swapping its src. */
+.ytaib-blacklisted ytd-thumbnail {
+    position: relative;
+}
+
+.ytaib-blacklisted ytd-thumbnail::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    border-radius: 12px;
+    /* The image is 4:3 and thumbnails are 16:9, so fill the sides with its background colour. */
+    background: #fcebe6
+        url("chrome-extension://__MSG_@@extension_id__/ai-slop.jpg") center /
+        contain no-repeat;
+    pointer-events: none;
+}
+
+/* Search results: sits in the channel row instead of over the thumbnail. */
+.ytaib-btn--inline {
+    position: static;
+    margin-left: 8px;
+    padding: 2px 8px;
+}
+
+/* Blacklisted channels always show their button, so they stand out at a glance. */
+:hover > .ytaib-btn,
+ytd-video-renderer:hover .ytaib-btn--inline,
+.ytaib-btn[data-state="blacklisted"] {
+    opacity: 1;
+}
