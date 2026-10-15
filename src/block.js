@@ -78,15 +78,25 @@ function getCardChannelKey(card) {
     return first === "channel" ? second : decodeURIComponent(first);
 }
 
+// The channel name shown as plain text, for cards with no channel link (e.g. the
+// watch page sidebar, where the name is a <span> and the avatar has no href).
+function getCardChannelName(card) {
+    return card.querySelector("yt-content-metadata-view-model .ytContentMetadataViewModelMetadataText")?.textContent.trim() || null;
+}
+
 function findInBlacklist(key) {
     const lower = key.toLowerCase();
     return blacklist.find((c) => c.id === key || c.handle?.toLowerCase() === lower);
 }
 
-// The blacklist entry for the card's channel, judged only by the card's own links.
+// The blacklist entry for the card's channel, judged only by what the card shows:
+// its channel link if it has one, otherwise the channel name.
 function findCardEntry(card) {
     const key = getCardChannelKey(card);
-    return key ? findInBlacklist(key) : undefined;
+    if (key) return findInBlacklist(key);
+
+    const name = getCardChannelName(card);
+    return name ? blacklist.find((c) => c.name === name) : undefined;
 
     // Disabled for now: fall back to downloading the watch page when the card has no channel link.
     // // A card link is only conclusive if every entry has a handle to compare against.
@@ -197,19 +207,28 @@ function addButton(card) {
     container.appendChild(btn);
 }
 
-// Syncs the button label, and the red outline on search results, with the blacklist.
+// Cards that get marked or hidden when blacklisted: search results and the watch page sidebar.
+const MARKED_CARD_SELECTOR = [
+    "ytd-search ytd-video-renderer",
+    "ytd-watch-next-secondary-results-renderer yt-lockup-view-model",
+    "ytd-watch-next-secondary-results-renderer ytd-compact-video-renderer",
+].join(",");
+
+// Syncs the button label, and the red outline on marked cards, with the blacklist.
 function updateCard(card) {
     const state = getCardState(card);
     const btn = card.querySelector(".ytaib-btn");
     if (btn && btn.dataset.state !== "loading") setButtonState(btn, state);
-    if (card.matches("ytd-search ytd-video-renderer")) card.classList.toggle("ytaib-blacklisted", state !== "idle");
+    if (card.matches(MARKED_CARD_SELECTOR)) card.classList.toggle("ytaib-blacklisted", state !== "idle");
 }
 
 // Tells background.js how many blacklisted videos this page has, for the icon badge.
 let lastCount = null;
 function updateBadge() {
-    // YouTube keeps the search page in the DOM (hidden) after you navigate away.
-    const count = document.querySelectorAll("ytd-search:not([hidden]) .ytaib-blacklisted").length;
+    // YouTube keeps visited pages in the DOM (hidden) after you navigate away.
+    const count = document.querySelectorAll(
+        "ytd-search:not([hidden]) .ytaib-blacklisted, ytd-watch-flexy:not([hidden]) .ytaib-blacklisted"
+    ).length;
     if (count === lastCount) return;
     lastCount = count;
     chrome.runtime.sendMessage({ type: "blacklistedCount", count }).catch(() => {});

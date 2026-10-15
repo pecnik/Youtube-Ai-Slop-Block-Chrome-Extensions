@@ -50,11 +50,13 @@ yt-lockup-view-model {
 
 /* Cover the thumbnail with the "AI slop" image. An overlay survives YouTube
    re-rendering the <img>, unlike swapping its src. */
-.ytaib-blacklisted ytd-thumbnail {
+.ytaib-blacklisted ytd-thumbnail,
+.ytaib-blacklisted yt-thumbnail-view-model {
     position: relative;
 }
 
-.ytaib-blacklisted ytd-thumbnail::after {
+.ytaib-blacklisted ytd-thumbnail::after,
+.ytaib-blacklisted yt-thumbnail-view-model::after {
     content: "";
     position: absolute;
     inset: 0;

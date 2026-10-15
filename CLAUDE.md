@@ -21,7 +21,10 @@ This file describes **what the extension should do**, so it can be rebuilt if Yo
   - **Hidden:** removed from the results completely.
 - Changes apply right away, with no page reload: when you click the button, when you edit the list in the popup, and when you change the setting.
 
-### Other cards (home, sidebar, channel pages)
+### Watch page sidebar (recommended videos)
+- Same toggle button as other cards (top-left, on hover), and marked/hidden like search results.
+
+### Other cards (home, channel pages)
 - They only get the toggle button, at the top-left of the card and visible on hover. They're not outlined or hidden yet.
 
 ### Popup
@@ -30,18 +33,19 @@ This file describes **what the extension should do**, so it can be rebuilt if Yo
 - The list of blacklisted channels: each name links to the channel and has a ✕ button that removes it. The list updates live.
 
 ### Toolbar icon badge
-- Shows the number of blacklisted videos on the current tab's search page, in either mode. White text on red. Empty when the count is 0.
+- Shows the number of blacklisted videos on the current tab's search page or watch page sidebar, in either mode. White text on red. Empty when the count is 0.
 
 ## Current implementation (YouTube-specific, check these first if something breaks)
 
 - **Files:** `block.js` + `block.css` (content script), `background.js` (sets the badge), `popup.html` / `popup.js`.
 - **Cards:** `ytd-rich-item-renderer`, `ytd-video-renderer`, `ytd-compact-video-renderer`, `ytd-grid-video-renderer`, `yt-lockup-view-model`. A search result is `ytd-search ytd-video-renderer`. Nested cards are skipped.
-- **Detecting a card's channel:** the card's own `/@handle` or `/channel/UC…` link. There's no network request when checking.
+- **Detecting a card's channel:** the card's own `/@handle` or `/channel/UC…` link. There's no network request when checking. Sidebar lockups (`ytd-watch-next-secondary-results-renderer yt-lockup-view-model`) have no channel link, so they fall back to matching the plain-text name in `yt-content-metadata-view-model .ytContentMetadataViewModelMetadataText` against the stored `name`.
+- **Sidebar thumbnail overlay:** lockups use `yt-thumbnail-view-model` instead of `ytd-thumbnail`.
 - **Getting the `UC…` id when adding:** fetch `/watch?v=ID` and use regexes to read `videoDetails.channelId`, `author` and `ownerProfileUrl`. The page is about 1.4 MB, so only do this on click.
 - **Button placement:** on search results it goes in `#channel-info`, because YouTube's hover-preview overlay covers anything on the thumbnail (raising the `z-index` doesn't help).
 - **Thumbnail overlay:** a CSS `::after` on `ytd-thumbnail`. Don't swap the `<img>` src, because YouTube re-renders it.
 - **Hide mode:** a `ytaib-hide-blacklisted` class on `<html>` with `.ytaib-blacklisted { display: none }`.
-- **Badge:** the content script counts `ytd-search:not([hidden]) .ytaib-blacklisted` and messages `background.js` only when the count changes. Content scripts can't call `chrome.action`.
+- **Badge:** the content script counts `.ytaib-blacklisted` inside `ytd-search:not([hidden])` and `ytd-watch-flexy:not([hidden])` and messages `background.js` only when the count changes. Content scripts can't call `chrome.action`.
 - **Dynamic page:** a `MutationObserver` on the whole document reruns `scan()`. Only write to the DOM when a value actually changes, or the observer triggers itself in an endless loop.
 
 ## Working with the user
