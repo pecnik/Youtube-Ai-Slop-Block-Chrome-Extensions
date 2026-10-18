@@ -207,9 +207,11 @@ function addButton(card) {
     container.appendChild(btn);
 }
 
-// Cards that get marked or hidden when blacklisted: search results and the watch page sidebar.
+// Cards that get marked or hidden when blacklisted: search results, the home page
+// grid and the watch page sidebar.
 const MARKED_CARD_SELECTOR = [
     "ytd-search ytd-video-renderer",
+    'ytd-browse[page-subtype="home"] ytd-rich-item-renderer',
     "ytd-watch-next-secondary-results-renderer yt-lockup-view-model",
     "ytd-watch-next-secondary-results-renderer ytd-compact-video-renderer",
 ].join(",");
@@ -227,7 +229,11 @@ let lastCount = null;
 function updateBadge() {
     // YouTube keeps visited pages in the DOM (hidden) after you navigate away.
     const count = document.querySelectorAll(
-        "ytd-search:not([hidden]) .ytaib-blacklisted, ytd-watch-flexy:not([hidden]) .ytaib-blacklisted"
+        [
+            "ytd-search:not([hidden]) .ytaib-blacklisted",
+            'ytd-browse[page-subtype="home"]:not([hidden]) .ytaib-blacklisted',
+            "ytd-watch-flexy:not([hidden]) .ytaib-blacklisted",
+        ].join(",")
     ).length;
     if (count === lastCount) return;
     lastCount = count;

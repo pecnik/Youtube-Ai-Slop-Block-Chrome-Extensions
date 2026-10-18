@@ -24,7 +24,10 @@ This file describes **what the extension should do**, so it can be rebuilt if Yo
 ### Watch page sidebar (recommended videos)
 - Same toggle button as other cards (top-left, on hover), and marked/hidden like search results.
 
-### Other cards (home, channel pages)
+### Home page grid
+- Same toggle button as other cards (top-left, on hover), and marked/hidden like search results.
+
+### Other cards (channel pages, etc.)
 - They only get the toggle button, at the top-left of the card and visible on hover. They're not outlined or hidden yet.
 
 ### Popup
@@ -33,7 +36,7 @@ This file describes **what the extension should do**, so it can be rebuilt if Yo
 - The list of blacklisted channels: each name links to the channel and has a ✕ button that removes it. The list updates live.
 
 ### Toolbar icon badge
-- Shows the number of blacklisted videos on the current tab's search page or watch page sidebar, in either mode. White text on red. Empty when the count is 0.
+- Shows the number of blacklisted videos on the current tab's search page, home page or watch page sidebar, in either mode. White text on red. Empty when the count is 0.
 
 ## Current implementation (YouTube-specific, check these first if something breaks)
 
@@ -45,7 +48,7 @@ This file describes **what the extension should do**, so it can be rebuilt if Yo
 - **Button placement:** on search results it goes in `#channel-info`, because YouTube's hover-preview overlay covers anything on the thumbnail (raising the `z-index` doesn't help).
 - **Thumbnail overlay:** a CSS `::after` on `ytd-thumbnail`. Don't swap the `<img>` src, because YouTube re-renders it.
 - **Hide mode:** a `ytaib-hide-blacklisted` class on `<html>` with `.ytaib-blacklisted { display: none }`.
-- **Badge:** the content script counts `.ytaib-blacklisted` inside `ytd-search:not([hidden])` and `ytd-watch-flexy:not([hidden])` and messages `background.js` only when the count changes. Content scripts can't call `chrome.action`.
+- **Badge:** the content script counts `.ytaib-blacklisted` inside `ytd-search:not([hidden])`, `ytd-browse[page-subtype="home"]:not([hidden])` and `ytd-watch-flexy:not([hidden])` and messages `background.js` only when the count changes. Content scripts can't call `chrome.action`.
 - **Dynamic page:** a `MutationObserver` on the whole document reruns `scan()`. Only write to the DOM when a value actually changes, or the observer triggers itself in an endless loop.
 
 ## Working with the user
