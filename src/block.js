@@ -118,8 +118,15 @@ function findCardEntry(card) {
     // return Boolean(entry);
 }
 
+// AiSList only has handles. Cards with no channel link (the watch page sidebar) only
+// show the name, so guess the handle from it: "Mysteries of Mythology" -> "@mysteriesofmythology".
+// Misses channels whose handle differs from their name (e.g. "@name-x7k").
 function isInAisList(card) {
-    return aislist.has(getCardChannelKey(card)?.toLowerCase());
+    const key = getCardChannelKey(card);
+    if (key) return aislist.has(key.toLowerCase());
+
+    const name = getCardChannelName(card);
+    return name ? aislist.has("@" + name.replace(/[^\p{L}\p{N}_.-]/gu, "").toLowerCase()) : false;
 }
 
 async function addToBlacklist(channel) {
