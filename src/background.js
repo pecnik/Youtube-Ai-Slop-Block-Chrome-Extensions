@@ -18,9 +18,10 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 const AISLIST_URL = "https://raw.githubusercontent.com/Override92/AiSList/main/AiSList/aislist_blocklist.txt";
 const AISLIST_MAX_AGE = 60 * 60 * 1000;
 
+// Resolves to true if the list is fresh (downloaded now or recently enough), false if the download failed.
 async function syncAisList({ force = false } = {}) {
     const { aislist } = await chrome.storage.local.get("aislist");
-    if (!force && aislist && Date.now() - aislist.fetchedAt < AISLIST_MAX_AGE) return;
+    if (!force && aislist && Date.now() - aislist.fetchedAt < AISLIST_MAX_AGE) return true;
 
     try {
         const res = await fetch(AISLIST_URL, { cache: "no-cache" });
@@ -32,11 +33,20 @@ async function syncAisList({ force = false } = {}) {
             .filter((line) => line && !line.startsWith("!"));
         await chrome.storage.local.set({ aislist: { handles, fetchedAt: Date.now() } });
         console.log(`[YT-AI-Block] AiSList synced: ${handles.length} channels`);
+        return true;
     } catch (err) {
         // Keep the old copy; the next alarm tries again.
         console.warn("[YT-AI-Block] AiSList sync failed:", err);
+        return false;
     }
 }
+
+// The popup's "Sync AiSList" button. Returning true keeps sendResponse open for the async reply.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.type !== "syncAisList") return;
+    syncAisList({ force: true }).then((ok) => sendResponse({ ok }));
+    return true;
+});
 
 chrome.alarms.create("aislist", { periodInMinutes: 60 });
 chrome.alarms.onAlarm.addListener((alarm) => {

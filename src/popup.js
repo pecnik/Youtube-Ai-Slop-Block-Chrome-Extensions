@@ -8,6 +8,34 @@ chrome.storage.sync.get("showBlacklisted").then(({ showBlacklisted: show = true 
 });
 showBlacklisted.onchange = () => chrome.storage.sync.set({ showBlacklisted: showBlacklisted.checked });
 
+const aislistStatus = document.getElementById("aislist-status");
+const syncAislist = document.getElementById("sync-aislist");
+
+function timeAgo(time) {
+    const minutes = Math.floor((Date.now() - time) / 60000);
+    if (minutes < 1) return "just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    return `${Math.floor(minutes / 60)} h ago`;
+}
+
+async function renderAisList() {
+    const { aislist } = await chrome.storage.local.get("aislist");
+    aislistStatus.textContent = aislist
+        ? `AiSList: ${aislist.handles.length} channels\nsynced ${timeAgo(aislist.fetchedAt)}`
+        : "AiSList: not synced yet";
+}
+
+// background.js does the download, so it keeps working if the popup closes mid-sync.
+syncAislist.onclick = async () => {
+    syncAislist.disabled = true;
+    syncAislist.textContent = "Syncing…";
+    const { ok } = await chrome.runtime.sendMessage({ type: "syncAisList" });
+    syncAislist.disabled = false;
+    syncAislist.textContent = ok ? "Sync AiSList" : "Failed, retry";
+    renderAisList();
+};
+renderAisList();
+
 async function render() {
     const { blacklist = [] } = await chrome.storage.sync.get("blacklist");
     count.textContent = blacklist.length;

@@ -13,6 +13,9 @@
                 background: #181818;
                 color: #eee;
             }
+            hr {
+                border-color: #222;
+            }
             h1 {
                 font-size: 15px;
                 margin: 0 0 10px;
@@ -93,6 +96,30 @@
                 outline: 2px solid #888;
                 outline-offset: 2px;
             }
+            .aislist {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 10px;
+                color: #aaa;
+            }
+            #aislist-status {
+                white-space: pre-line;
+            }
+            .aislist button {
+                padding: 3px 8px;
+                border-radius: 4px;
+                background: #333;
+                color: #eee;
+            }
+            .aislist button:hover:not(:disabled) {
+                background: #444;
+            }
+            .aislist button:disabled {
+                color: #888;
+                cursor: default;
+            }
             .empty {
                 color: #777;
                 font-style: italic;
@@ -104,6 +131,12 @@
             Show blacklisted channels
             <input type="checkbox" id="show-blacklisted" class="switch" />
         </label>
+        <hr />
+        <div class="aislist">
+            <span id="aislist-status">AiSList: not synced yet</span>
+            <button id="sync-aislist">Sync AiSList</button>
+        </div>
+        <hr />
         <h1>AI-Slop blacklist (<span id="count">0</span>)</h1>
         <ul id="list"></ul>
         <script src="popup.js"></script>
