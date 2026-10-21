@@ -104,6 +104,14 @@
                 margin-bottom: 10px;
                 color: #aaa;
             }
+            .stats {
+                margin-bottom: 10px;
+                color: #aaa;
+            }
+            #blocked-today {
+                color: #e53935;
+                font-weight: bold;
+            }
             #aislist-status {
                 white-space: pre-line;
             }
@@ -131,6 +139,8 @@
             Show blacklisted channels
             <input type="checkbox" id="show-blacklisted" class="switch" />
         </label>
+        <hr />
+        <div class="stats">Blocked <span id="blocked-today">0</span> today</div>
         <hr />
         <div class="aislist">
             <span id="aislist-status">AiSList: not synced yet</span>

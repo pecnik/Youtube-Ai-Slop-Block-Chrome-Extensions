@@ -12,6 +12,25 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     });
 });
 
+// Unique video ids blocked today, for the popup. Several tabs report at once, so
+// queue the read-modify-write steps or they'd overwrite each other.
+let blockedQueue = Promise.resolve();
+
+async function addBlocked(videoIds) {
+    const today = new Date().toLocaleDateString("sv"); // "2026-10-21", local time
+    const { blockedToday } = await chrome.storage.local.get("blockedToday");
+    const ids = new Set(blockedToday?.date === today ? blockedToday.videoIds : []);
+    const before = ids.size;
+    videoIds.forEach((id) => ids.add(id));
+    if (ids.size === before) return;
+    await chrome.storage.local.set({ blockedToday: { date: today, videoIds: [...ids] } });
+}
+
+chrome.runtime.onMessage.addListener((message, sender) => {
+    if (message.type !== "blocked") return;
+    blockedQueue = blockedQueue.then(() => addBlocked(message.videoIds)).catch(console.warn);
+});
+
 // AiSList (https://github.com/Override92/AiSList, CC BY-NC 4.0): a community list
 // of AI-slop channel handles. We download it at most once an hour and keep the
 // handles in chrome.storage.local, where block.js reads them into memory.

@@ -247,6 +247,28 @@ function updateBadge() {
     chrome.runtime.sendMessage({ type: "blacklistedCount", count }).catch(() => {});
 }
 
+// Tells background.js about blacklisted videos this tab hasn't reported yet today,
+// for the popup's "Blocked N videos today".
+let reportedDay = null;
+let reportedIds = new Set();
+function reportBlocked() {
+    const today = new Date().toLocaleDateString("sv"); // "2026-10-21", local time
+    if (today !== reportedDay) {
+        reportedDay = today;
+        reportedIds = new Set();
+    }
+
+    const videoIds = [];
+    document.querySelectorAll(".ytaib-blacklisted").forEach((card) => {
+        const id = getVideoId(card);
+        if (id && !reportedIds.has(id)) {
+            reportedIds.add(id);
+            videoIds.push(id);
+        }
+    });
+    if (videoIds.length) chrome.runtime.sendMessage({ type: "blocked", videoIds }).catch(() => {});
+}
+
 function scan() {
     document.querySelectorAll(CARD_SELECTOR).forEach((card) => {
         // Skip cards nested inside another card (e.g. lockup inside rich-item).
@@ -255,6 +277,7 @@ function scan() {
         updateCard(card);
     });
     updateBadge();
+    reportBlocked();
 }
 
 // YouTube loads cards dynamically, so rescan whenever the page changes.

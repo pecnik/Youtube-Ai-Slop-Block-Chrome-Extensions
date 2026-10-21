@@ -8,7 +8,20 @@ chrome.storage.sync.get("showBlacklisted").then(({ showBlacklisted: show = true 
 });
 showBlacklisted.onchange = () => chrome.storage.sync.set({ showBlacklisted: showBlacklisted.checked });
 
-const aislistStatus = document.getElementById("aislist-status");
+const blockedToday = document.getElementById("blocked-today");
+
+async function renderBlockedToday() {
+    const today = new Date().toLocaleDateString("sv"); // same format as background.js
+    const { blockedToday: data } = await chrome.storage.local.get("blockedToday");
+    const n = data?.date === today ? data.videoIds.length : 0;
+    blockedToday.textContent = n === 1 ? "1 video" : `${n} videos`;
+}
+chrome.storage.onChanged.addListener((changes) => {
+    if (changes.blockedToday) renderBlockedToday();
+});
+renderBlockedToday();
+
+const aislistStatus =document.getElementById("aislist-status");
 const syncAislist = document.getElementById("sync-aislist");
 
 function timeAgo(time) {
