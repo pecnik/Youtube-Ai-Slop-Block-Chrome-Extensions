@@ -1,6 +1,6 @@
 # YT-AI-Slop-Block
 
-A Chrome extension for blacklisting YouTube channels.
+Vibe coded slop for ai youtube slop
 
 ## Install
 
